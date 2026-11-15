@@ -29,6 +29,9 @@ setCourse("");
 setpriority("Medium");
 }
 
+function deleteAssignment(id) {
+  setAssignment(previousAssignments => previousAssignments.filter(assignment => assignment.id !== id));
+}
 //here we have an array of assignments Object now we have to map it so that i can display all the assignments 
 
   return (
@@ -66,7 +69,7 @@ setpriority("Medium");
               <h3>{assignment.title}</h3>
               <p>{assignment.course}</p>
               <p>{assignment.priority}</p>
-              <button>🗑️Delete</button>
+              <button onClick={() => deleteAssignment(assignment.id)}>🗑️Delete</button>
             </div>
           ))
         }
