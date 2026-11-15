@@ -2,14 +2,17 @@ import { useState } from 'react'
 import './App.css';
 
 
-
 function App() {
  
   const [assignment,setAssignment]=useState([]);
   const [Tittle,setTittle]= useState(""); 
   const[Course,setCourse]=useState("");
   const[priority,setpriority]=useState("Medium");
-  
+  const[editid,seteditid]=useState(null);
+  const[editTittle,seteditTittle]=useState("");
+  const[editCourse,seteditCourse]=useState("");
+  const[editPriority,seteditPriority]=useState("Medium");
+
 function addAssignment() {//creates an object with the assignment details and adds it to the assignment array
  if (!Tittle.trim() || !Course.trim()) {
   alert("Please fill in all fields");
@@ -49,6 +52,32 @@ function toggleCompleted(id) {
     })
   );
 }
+function editAssignment(assignment){
+  seteditid(assignment.id);
+  seteditTittle(assignment.title);
+  seteditCourse(assignment.course);
+  seteditPriority(assignment.priority);
+}
+function saveChanges(editid){
+  setAssignment(previousAssignments =>
+    previousAssignments.map((assignment) => {
+      if (assignment.id === editid) {
+        return {
+          ...assignment,
+          title: editTittle.trim(),
+          course: editCourse.trim(),
+          priority: editPriority
+        };
+      }
+
+      return assignment;
+    })
+  );
+  seteditid(null);
+  seteditTittle("");
+  seteditCourse("");
+  seteditPriority("Medium");
+}
   return (
     <>
     <div>
@@ -86,6 +115,36 @@ function toggleCompleted(id) {
               <p>{assignment.priority}</p>
               <button onClick={() => deleteAssignment(assignment.id)}>🗑️Delete</button>
               <button onClick={()=>toggleCompleted(assignment.id)}>{assignment.completed ? '✅ COMPLETED' : '❌ PENDING'}</button>
+              <button onClick={()=>editAssignment(assignment)}>✏️ Edit</button>
+              {editid === assignment.id && (
+                <div>
+                  <input
+                    placeholder="Edit Assignment title"
+                    value={editTittle}
+                    onChange={(e) => seteditTittle(e.target.value)}
+                  />
+                  <input
+                    placeholder="Edit Course title"
+                    value={editCourse}
+                    onChange={(e) => seteditCourse(e.target.value)}
+                  />
+                  <select
+                    value={editPriority}
+                    onChange={(e) => seteditPriority(e.target.value)}
+                  >
+                    <option>Low</option>
+                    <option>Medium</option>
+                    <option>High</option>
+                  </select>
+                  <button onClick={() => saveChanges(editid)}>SAVE CHANGES</button>
+                  <button onClick={() => {
+                    seteditid(null);
+                    seteditTittle("");
+                    seteditCourse("");
+                    seteditPriority("Medium");
+                  }}>Cancel</button>
+                </div>
+              )}
             </div>
           ))
         }
