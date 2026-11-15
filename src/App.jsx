@@ -10,7 +10,7 @@ function App() {
   const[Course,setCourse]=useState("");
   const[priority,setpriority]=useState("Medium");
   
-function addAssignment() {
+function addAssignment() {//creates an object with the assignment details and adds it to the assignment array
  if (!Tittle.trim() || !Course.trim()) {
   alert("Please fill in all fields");
   return;
@@ -19,7 +19,8 @@ function addAssignment() {
     id: crypto.randomUUID(),
     title: Tittle.trim(),
     course: Course.trim(),
-    priority: priority
+    priority: priority,
+    completed:false
   };
 
   setAssignment(
@@ -34,6 +35,20 @@ function deleteAssignment(id) {
 }
 //here we have an array of assignments Object now we have to map it so that i can display all the assignments 
 
+function toggleCompleted(id) {
+  setAssignment(previousAssignments =>
+    previousAssignments.map((assignment) => {
+      if (assignment.id === id) {
+        return {
+          ...assignment,//this has all the previous properties of the assignment object and we are just changing the completed property to its opposite value
+          completed: !assignment.completed //we are using the ! operator to toggle the value of completed property so if it was true it will become false and vice versa
+        };
+      }
+
+      return assignment;
+    })
+  );
+}
   return (
     <>
     <div>
@@ -70,6 +85,7 @@ function deleteAssignment(id) {
               <p>{assignment.course}</p>
               <p>{assignment.priority}</p>
               <button onClick={() => deleteAssignment(assignment.id)}>🗑️Delete</button>
+              <button onClick={()=>toggleCompleted(assignment.id)}>{assignment.completed ? '✅ COMPLETED' : '❌ PENDING'}</button>
             </div>
           ))
         }
