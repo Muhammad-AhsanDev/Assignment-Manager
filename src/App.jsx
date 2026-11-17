@@ -12,6 +12,11 @@ function App() {
   const[editTittle,seteditTittle]=useState("");
   const[editCourse,seteditCourse]=useState("");
   const[editPriority,seteditPriority]=useState("Medium");
+  const[filter,setFilter]=useState("all");
+  const[searchTerm,setSearchTerm]=useState("");
+
+
+
 
 function addAssignment() {//creates an object with the assignment details and adds it to the assignment array
  if (!Tittle.trim() || !Course.trim()) {
@@ -78,6 +83,27 @@ function saveChanges(editid){
   seteditCourse("");
   seteditPriority("Medium");
 }
+const FilteredAssignments=assignment.filter((assignment)=>{
+    if(filter==="all"){
+      return true;
+    }
+    else if(filter==="pending"){
+      return !assignment.completed;
+    }
+    else if(filter==="completed"){
+      return assignment.completed;
+    }
+  })
+
+const searchedAssignments=FilteredAssignments.filter((assignment)=>{
+  return assignment.title.toLowerCase().includes(searchTerm.toLowerCase())
+   || assignment.course.toLowerCase().includes(searchTerm.toLowerCase());
+})
+
+
+
+
+
   return (
     <>
     <div>
@@ -107,8 +133,30 @@ function saveChanges(editid){
     <div>
       <h2>My Assignments</h2>
       <div>
+{searchedAssignments.length === 0 && <p>No assignments found.</p>}
+    {assignment.length > 0 && (
+      <>
+      <input
+        placeholder="Search assignments..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+      <br/>
+       <button onClick={() => setFilter("all")}>
+                    All
+           </button>
+
+            <button onClick={() => setFilter("pending")}>
+                    Pending
+           </button>
+
+           <button onClick={() => setFilter("completed")}>
+                    Completed
+          </button></>
+    )}
+          
         {
-          assignment.map((assignment)=>(
+          searchedAssignments.map((assignment)=>(
             <div key={assignment.id}>
               <h3>{assignment.title}</h3>
               <p>{assignment.course}</p>
