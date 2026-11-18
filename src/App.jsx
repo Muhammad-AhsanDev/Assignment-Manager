@@ -14,13 +14,31 @@ function App() {
   const[editPriority,seteditPriority]=useState("Medium");
   const[filter,setFilter]=useState("all");
   const[searchTerm,setSearchTerm]=useState("");
+  
+const [dueDate, setDueDate] = useState("");
+const [editDueDate, setEditDueDate] = useState("");
+  const[sort,setsort]=useState("none");
 
+//today's date as "yyyy-mm-dd", the same format the date input gives us
+const todayString = new Date().toLocaleDateString("en-CA");
+
+//an assignment is overdue if it is NOT completed and its due date is before today
+function isOverdue(assignment) {
+  return !assignment.completed && assignment.date < todayString;
+}
+
+//how many assignments are overdue (shown on the Overdue button)
+const overdueCount = assignment.filter(isOverdue).length;
 
 
 
 function addAssignment() {//creates an object with the assignment details and adds it to the assignment array
- if (!Tittle.trim() || !Course.trim()) {
+ if (!Tittle.trim() || !Course.trim()|| !dueDate) {
   alert("Please fill in all fields");
+  return;
+}
+ if (dueDate < todayString) {
+  alert("The due date cannot be in the past");
   return;
 }
   const newAssignment = {
@@ -28,7 +46,8 @@ function addAssignment() {//creates an object with the assignment details and ad
     title: Tittle.trim(),
     course: Course.trim(),
     priority: priority,
-    completed:false
+    completed:false,
+    date: dueDate
   };
 
   setAssignment(
@@ -36,6 +55,7 @@ function addAssignment() {//creates an object with the assignment details and ad
 setTittle("");
 setCourse("");
 setpriority("Medium");
+setDueDate("");
 }
 
 function deleteAssignment(id) {
@@ -62,6 +82,7 @@ function editAssignment(assignment){
   seteditTittle(assignment.title);
   seteditCourse(assignment.course);
   seteditPriority(assignment.priority);
+  setEditDueDate(assignment.date);
 }
 function saveChanges(editid){
   setAssignment(previousAssignments =>
@@ -71,7 +92,8 @@ function saveChanges(editid){
           ...assignment,
           title: editTittle.trim(),
           course: editCourse.trim(),
-          priority: editPriority
+          priority: editPriority,
+          date: editDueDate
         };
       }
 
@@ -93,6 +115,9 @@ const FilteredAssignments=assignment.filter((assignment)=>{
     else if(filter==="completed"){
       return assignment.completed;
     }
+    else if(filter==="overdue"){
+      return isOverdue(assignment);
+    }
   })
 
 const searchedAssignments=FilteredAssignments.filter((assignment)=>{
@@ -100,26 +125,45 @@ const searchedAssignments=FilteredAssignments.filter((assignment)=>{
    || assignment.course.toLowerCase().includes(searchTerm.toLowerCase());
 })
 
+const priorityOrder = { High: 0, Medium: 1, Low: 2 };
+
+const sortedAssignments = [...searchedAssignments].sort((a, b) => {
+  if (sort === "dateAsc")  return new Date(a.date) - new Date(b.date);
+  if (sort === "dateDesc") return new Date(b.date) - new Date(a.date);
+  if (sort === "priority") {
+    return priorityOrder[a.priority] - priorityOrder[b.priority] ||
+           new Date(a.date) - new Date(b.date);   // tie → soonest date first
+  }
+  return 0;
+});
 
 
-
-
+//APP DISPLAY HERE !!!!!!!!!
   return (
     <>
-    <div>
-      <h1>Assignment Manager</h1>
-
-      <input
+<div className='add-section'>
+      <h1 className='assignment-manager-title'>Assignment Manager</h1>
+<div className='AddAssignment-container'>
+      <input 
+        className='AddAssignment-input'
                   placeholder="Assignment title"
                   value={Tittle}
                   onChange={(e) => setTittle(e.target.value)}
       />
-      <input
+      <input className='AddAssignment-input'
                   placeholder="Course title"
                   value={Course}
                   onChange={(e) => setCourse(e.target.value)}
       />
-      <select
+      <input
+  className='AddAssignment-input'
+  type='date'
+  min={todayString}
+  value={dueDate}
+  onChange={(e) => setDueDate(e.target.value)}
+/>
+      <select 
+                className='AddAssignment-priority'
                 value={priority}
                 onChange={(e) => setpriority(e.target.value)}
          >
@@ -128,55 +172,85 @@ const searchedAssignments=FilteredAssignments.filter((assignment)=>{
                 <option>High</option>
       </select>
 
-      <button onClick={addAssignment}>+ Add Assignment</button>
+      <button onClick={addAssignment} className='add-assignment-button'>
+        + Add Assignment
+      </button>
+ </div>
     </div>
-    <div>
-      <h2>My Assignments</h2>
-      <div>
-{searchedAssignments.length === 0 && <p>No assignments found.</p>}
+    <div className='list-section'>
+      <h2 className='assignment-manager-h2'>My Assignments</h2>
+      <div className='assignments-container'>
+{searchedAssignments.length === 0 && <p className='empty-state'>No assignments found.</p>}
     {assignment.length > 0 && (
       <>
       <input
+        className='search-input'
         placeholder="Search assignments..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
       <br/>
-       <button onClick={() => setFilter("all")}>
+      <div className='filter-bar'>
+       <button className={filter === "all" ? "filter-btn active" : "filter-btn"} onClick={() => setFilter("all")}>
                     All
            </button>
 
-            <button onClick={() => setFilter("pending")}>
+            <button className={filter === "pending" ? "filter-btn active" : "filter-btn"} onClick={() => setFilter("pending")}>
                     Pending
            </button>
 
-           <button onClick={() => setFilter("completed")}>
+           <button className={filter === "completed" ? "filter-btn active" : "filter-btn"} onClick={() => setFilter("completed")}>
                     Completed
-          </button></>
+          </button>
+          <button className={filter === "overdue" ? "filter-btn active" : "filter-btn"} onClick={() => setFilter("overdue")}>
+                    Overdue ({overdueCount})
+          </button>
+          <select className='sort-select' value={sort} onChange={(e) => setsort(e.target.value)}>
+            <option value="none">Sort by...</option>
+            <option value="dateAsc">Due date (soonest first)</option>
+            <option value="dateDesc">Due date (latest first)</option>
+            <option value="priority">Priority (high to low)</option>
+          </select>
+          </div></>
     )}
           
-        {
-          searchedAssignments.map((assignment)=>(
-            <div key={assignment.id}>
-              <h3>{assignment.title}</h3>
-              <p>{assignment.course}</p>
-              <p>{assignment.priority}</p>
-              <button onClick={() => deleteAssignment(assignment.id)}>🗑️Delete</button>
-              <button onClick={()=>toggleCompleted(assignment.id)}>{assignment.completed ? '✅ COMPLETED' : '❌ PENDING'}</button>
-              <button onClick={()=>editAssignment(assignment)}>✏️ Edit</button>
+        { 
+          sortedAssignments.map((assignment)=>(
+            <div
+              key={assignment.id}
+              className={`assignment-card prio-${assignment.priority.toLowerCase()}${assignment.completed ? " is-completed" : ""}`}
+            >
+              <h3 className='card-title'>{assignment.title}</h3>
+              <p className='card-course'>{assignment.course}</p>
+              <p className={`card-priority prio-${assignment.priority.toLowerCase()}`}>{assignment.priority}</p>
+              <p className='card-date'>{assignment.date}</p>
+              {isOverdue(assignment) && <p className='card-overdue'>⚠️ Overdue</p>}
+              <button className='btn btn-delete' onClick={() => deleteAssignment(assignment.id)}>🗑️Delete</button>
+              <button className={`btn btn-toggle ${assignment.completed ? "is-done" : "is-pending"}`} onClick={()=>toggleCompleted(assignment.id)}>{assignment.completed ? '✅ COMPLETED' : '❌ PENDING'}</button>
+              <button className='btn btn-edit' onClick={()=>editAssignment(assignment)}>✏️ Edit</button>
               {editid === assignment.id && (
-                <div>
+                <div className='edit-panel'>
                   <input
+                    className='edit-input'
                     placeholder="Edit Assignment title"
                     value={editTittle}
                     onChange={(e) => seteditTittle(e.target.value)}
                   />
                   <input
+                    className='edit-input'
                     placeholder="Edit Course title"
                     value={editCourse}
                     onChange={(e) => seteditCourse(e.target.value)}
                   />
+                  <input
+                        className='edit-input'
+                        type='date'
+                        min={todayString}
+                        value={editDueDate}
+                        onChange={(e) => setEditDueDate(e.target.value)}
+                      />
                   <select
+                    className='edit-select'
                     value={editPriority}
                     onChange={(e) => seteditPriority(e.target.value)}
                   >
@@ -184,8 +258,8 @@ const searchedAssignments=FilteredAssignments.filter((assignment)=>{
                     <option>Medium</option>
                     <option>High</option>
                   </select>
-                  <button onClick={() => saveChanges(editid)}>SAVE CHANGES</button>
-                  <button onClick={() => {
+                  <button className='btn btn-save' onClick={() => saveChanges(editid)}>SAVE CHANGES</button>
+                  <button className='btn btn-cancel' onClick={() => {
                     seteditid(null);
                     seteditTittle("");
                     seteditCourse("");
