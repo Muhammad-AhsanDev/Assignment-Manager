@@ -11,6 +11,7 @@
   --mint: #2fd6b0;
   --grape: #7a4dff;
   --burnt: #c4400b;
+  --overdue: #d92d20; /* NEW: red used only for overdue assignments */
   --pixel: 'Press Start 2P', cursive;
   --body: 'Fredoka', system-ui, sans-serif;
   --max: 900px;
@@ -184,19 +185,27 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
   background-repeat: no-repeat;
   background-position: 14px center;
 }
+
+/* CHANGED: the bar now holds 4 filter buttons + the sort dropdown, so it must
+   be allowed to wrap onto a second line instead of overflowing.
+   Radius is 26px (half the bar's height) instead of 999px so it still looks
+   right when it wraps. */
 .filter-bar {
   order: -1;
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
   padding: 5px;
   background: var(--cream);
   border: 3px solid var(--ink);
-  border-radius: 999px;
+  border-radius: 26px;
 }
 .filter-btn {
   padding: 0 18px;
   height: 36px;
   font: 700 14px var(--body);
+  white-space: nowrap; /* NEW: keeps "Overdue (3)" on one line */
   color: var(--ink);
   background: transparent;
   border: 3px solid transparent;
@@ -206,6 +215,28 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
 }
 .filter-btn:hover { background: rgba(255, 122, 24, 0.22); border-color: transparent; }
 .filter-btn.active, .filter-btn.active:hover { background: var(--tangerine); border-color: var(--ink); }
+
+/* NEW: the sort dropdown was completely unstyled (the browser's default grey
+   select). It now matches the pill look of the filter bar. */
+.sort-select {
+  height: 36px;
+  margin-left: 4px;
+  padding: 0 34px 0 16px;
+  font: 700 14px var(--body);
+  color: var(--ink);
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='10' viewBox='0 0 14 10'%3E%3Cpath d='M1 1l6 7 6-7' fill='none' stroke='%232a1712' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 9px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sort-select:hover { background-color: #ffe9b8; }
+.sort-select:focus-visible { outline: none; border-color: var(--grape); box-shadow: 0 0 0 3px rgba(122, 77, 255, 0.3); }
 
 .empty-state {
   order: 10;
@@ -225,15 +256,18 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
 .prio-medium { --accent: var(--sun); }
 .prio-high { --accent: var(--coral); }
 
+/* CHANGED: the grid now has named spots for the due date and the overdue
+   label. Before, those two elements had no spot, so the browser dropped them
+   into random empty cells and pushed the layout around. */
 .assignment-card {
   position: relative;
   flex: 1 1 100%;
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto auto auto auto minmax(0, 1fr) auto auto auto;
   grid-template-areas:
-    "title  title    title toggle edit delete"
-    "course priority .     .      .    ."
-    "panel  panel    panel panel  panel panel";
+    "title  title    title title   title toggle edit delete"
+    "course priority date  overdue .     .      .    ."
+    "panel  panel    panel panel   panel panel  panel panel";
   align-items: center;
   column-gap: 10px;
   padding: 26px 18px 18px;
@@ -259,10 +293,17 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
   transform: rotate(6deg);
 }
 
+/* NEW: a card that contains the overdue label gets a red shadow, so overdue
+   cards stand out even before you read them. (The priority colour on the top
+   stripe and the priority chip is untouched.) */
+.assignment-card:has(.card-overdue) { box-shadow: 6px 6px 0 var(--overdue); }
+
 .card-title { grid-area: title; font: 700 20px / 1.25 var(--body); overflow-wrap: anywhere; }
 .is-completed .card-title { color: #5a3d33; text-decoration: line-through 3px var(--coral); }
 
-.card-course, .card-priority {
+/* CHANGED: course, priority, date and overdue are all small "chips" and now
+   share one rule. This replaces the old separate .card-date block. */
+.card-course, .card-priority, .card-date, .card-overdue {
   justify-self: start;
   margin-top: 10px;
   padding: 3px 12px;
@@ -279,23 +320,20 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
 .card-priority.prio-medium::before { content: "⚡ "; }
 .card-priority.prio-high::before { content: "🔥 "; }
 
+.card-date { grid-area: date; background: #fff; }
+.card-date::before { content: "📅 "; }
+
+/* CHANGED: was plain red text; now a solid red chip that is easy to spot */
+.card-overdue {
+  grid-area: overdue;
+  font-weight: 700;
+  color: #fff;
+  background: var(--overdue);
+}
+
 .btn-toggle { grid-area: toggle; }
 .btn-edit { grid-area: edit; }
 .btn-delete { grid-area: delete; }
-.card-date{
-  
-  margin-top: 10px;
-  padding: 3px 12px;
-  max-width:fit-content;
-  font: 600 13px / 1.4 var(--body);
- 
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-}
-.card-overdue {
-  color: #dc2626;
-  font-weight: bold;
-}
 
 /* ---------- Inline edit panel ---------- */
 .edit-panel {
@@ -323,13 +361,19 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
   .AddAssignment-priority, .add-assignment-button { flex: 1 1 100%; }
   .assignments-container { padding: 40px 14px 18px; }
   .filter-bar { flex: 1 1 100%; }
-  .filter-btn { flex: 1; padding: 0 8px; }
 
+  /* CHANGED: buttons size to their text and wrap if needed (4 buttons do not
+     fit on one line on a phone), and the sort dropdown gets its own full row */
+  .filter-btn { flex: 1 1 auto; padding: 0 10px; }
+  .sort-select { flex: 1 1 100%; margin-left: 0; }
+
+  /* CHANGED: added the "date overdue" row */
   .assignment-card {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
       "title  title"
       "course priority"
+      "date   overdue"
       "toggle toggle"
       "edit   delete"
       "panel  panel";
@@ -341,5 +385,3 @@ body button:focus-visible { outline: 3px solid var(--grape); outline-offset: 3px
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
-
-

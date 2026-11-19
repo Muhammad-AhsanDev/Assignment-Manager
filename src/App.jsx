@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import './App.css';
 
 
 function App() {
- 
-  const [assignment,setAssignment]=useState([]);
+ const refreshassignments=JSON.parse(localStorage.getItem("assignments")) || [];
+  const [assignment,setAssignment]=useState(refreshassignments);
   const [Tittle,setTittle]= useState(""); 
   const[Course,setCourse]=useState("");
   const[priority,setpriority]=useState("Medium");
@@ -18,6 +18,11 @@ function App() {
 const [dueDate, setDueDate] = useState("");
 const [editDueDate, setEditDueDate] = useState("");
   const[sort,setsort]=useState("none");
+
+  useEffect(() => {
+     const converted = JSON.stringify(assignment);
+  localStorage.setItem("assignments", converted);
+  }, [assignment]);
 
 //today's date as "yyyy-mm-dd", the same format the date input gives us
 const todayString = new Date().toLocaleDateString("en-CA");
